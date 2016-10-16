@@ -16,15 +16,13 @@ public class Sprite {
         visible = true;
     }
 
-    public void die() {
-        visible = false;
-    }
+    public void die() {visible = false;}
 
     public boolean isVisible() {
         return visible;
     }
 
-    protected void setVisible(boolean visible) {
+    public void setVisible(boolean visible) {
         this.visible = visible;
     }
 
@@ -43,6 +41,7 @@ public class Sprite {
     public void setY(int y) {
         this.y = y;
     }
+
     public int getY() {
         return y;
     }

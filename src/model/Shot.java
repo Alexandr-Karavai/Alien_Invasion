@@ -14,6 +14,7 @@ public class Shot  {
 
     public Shot(Sprite spriteShot) {
         this.spriteShot = spriteShot;
+
     }
 
     public Shot(Sprite spriteShot,int x, int y) {

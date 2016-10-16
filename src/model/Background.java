@@ -2,12 +2,9 @@ package model;
 
 import javax.swing.*;
 
-/**
- * Created by Александр on 09.10.2016.
- */
 public class Background {
 
-    private String player = "/res/space.png";
+    private String player = "/res/fon.png";
 
     private final int START_Y = 0;
     private final int START_X = 0;

@@ -6,7 +6,7 @@ public class Alien {
 
     public Sprite spriteAlien;
 
-    private final String shot = "/res/aliens.png";
+    private final String shot = "/res/alien2.png";
 
     public Alien(int x, int y, Sprite spriteAlien) {
         this.spriteAlien = spriteAlien;

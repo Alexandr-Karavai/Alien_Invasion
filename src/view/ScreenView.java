@@ -1,12 +1,11 @@
 package view;
 
-
+import controller.KeyController;
 import model.*;
+import model.Player;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
-import java.awt.event.KeyEvent;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -18,15 +17,14 @@ public class ScreenView extends JPanel implements Runnable {
     private Player player;
     private Shot shot;
     private ArrayList aliens;
+    private BossAlien bossAlien;
 
     private Background background;
 
-   // private int alienX = 150;
-   // private int alienY = 5;
 
-    private Dimension dimension;
+    public Dimension dimension;
 
-    private boolean inGame = true;
+    public boolean inGame = true;
 
     private Thread animationThread;
 
@@ -35,34 +33,38 @@ public class ScreenView extends JPanel implements Runnable {
     private String scoresString;
     private String shotString;
 
-    private int direction = -1;
+    private int direction = -3;
     private int deaths = 0;
+    public int bossCountLife = 3;
 
-    private final String alienpix = "/res/aliens.png";
-    private final String expl = "/res/Boom-F2.png";
-
+    private final String alienpix = "/res/alien2.png";
+    private final String boom = "/res/blood.png";
+    private final String boomBoss = "/res/bloodBoss.png";
 
 
     public ScreenView()
     {
-        addKeyListener(new KeyManager());
+        addKeyListener(new KeyController(this));
+      //  addKeyListener(new KeyManager());
         setFocusable(true);
         dimension = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
-        setBackground(Color.black);
+        //setBackground(Color.black);
         gameCreateObject();
 
     }
 
 
     public void gameCreateObject() {
+
         background = new Background(new Sprite());
         aliens = new ArrayList();
-
+        bossAlien = new BossAlien(new Sprite());
+        bossAlien.bossSprite.setVisible(false);
         ImageIcon ii = new ImageIcon(this.getClass().getResource(alienpix));
 
-        for (int i=0; i < 4; i++) {
-            for (int j=0; j < 6; j++) {
-                Alien alien = new Alien(ALIEN_X + 32*j, ALIEN_Y + 32*i, new Sprite());
+        for (int i=0; i < 1; i++) {
+            for (int j=0; j < 1; j++) {
+                Alien alien = new Alien(ALIEN_X + 45*j, ALIEN_Y + 40*i, new Sprite());
                 alien.spriteAlien.setImage(ii.getImage());
                 aliens.add(alien);
             }
@@ -98,6 +100,18 @@ public class ScreenView extends JPanel implements Runnable {
         }
     }
 
+    public void drawBoss(Graphics g){
+        if (bossAlien.bossSprite.isVisible()) {
+            g.drawImage(bossAlien.bossSprite.getImage(),
+                    bossAlien.bossSprite.getX(), bossAlien.bossSprite.getY(), this);
+        }
+
+        if (bossAlien.bossSprite.isDying()) {
+            bossAlien.bossSprite.die();
+        }
+
+    }
+
     public void drawAliens(Graphics g)
     {
         Iterator it = aliens.iterator();
@@ -128,30 +142,43 @@ public class ScreenView extends JPanel implements Runnable {
         shotString = "Shots: " + countShot;
         scoresString = "Scores: " + 100*countScores;
 
-        g.setColor(Color.black);
-        g.fillRect(0, 0, dimension.width, dimension.height);
+       // g.setColor(Color.black);
+       // g.fillRect(0, 0, dimension.width, dimension.height);
         g.setColor(Color.green);
-
+        drawBackground(g);
         if (inGame) {
-            drawBackground(g);
             Font font = new Font("Helvetica", Font.BOLD, 28);
-
             g.setFont(font);
-            g.drawString(shotString,40,640);
-            g.drawString(scoresString,440,640);
+            g.drawString(shotString,40,840);
+            g.drawString(scoresString,650,840);
             g.drawLine(0, EARTH, SCREEN_WIDTH, EARTH);
-
             drawAliens(g);
+            drawBoss(g);
             drawPlayer(g);
             drawShot(g);
         }
-
         Toolkit.getDefaultToolkit().sync();
         g.dispose();
     }
 
     public void animationCycle() {
 
+        if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
+            bossAlien.bossSprite.setVisible(true);
+            if (bossAlien.bossSprite.isVisible()) {
+                int x = bossAlien.bossSprite.getX();
+                if (x  >= SCREEN_WIDTH - SCREEN_RIGHT_BOSS && direction != -3) {direction = -3;}
+                if (x <= SCREEN_LEFT && direction != 3) {direction = 3;}
+/*
+              //  int y = bossAlien.bossSprite.getY();
+
+                if (y > EARTH - ALIEN_HEIGHT) {
+                    inGame = false;
+                    //void gameOver;
+                }*/
+                bossAlien.act(direction);
+            }
+        }
 
         if (shot.spriteShot.isVisible()) {
 
@@ -165,12 +192,9 @@ public class ScreenView extends JPanel implements Runnable {
                 int alienY = alien.spriteAlien.getY();
 
                 if (alien.spriteAlien.isVisible() && shot.spriteShot.isVisible()) {
-                    if ( shotX >= (alienX) &&
-                            shotX <= (alienX + ALIEN_WIDTH) &&
-                            shotY >= (alienY) &&
-                            shotY <= (alienY+ALIEN_HEIGHT) ) {
-                        ImageIcon ii =
-                                new ImageIcon(getClass().getResource(expl));
+                    if ( shotX >= (alienX) && shotX <= (alienX + ALIEN_WIDTH) &&
+                            shotY >= (alienY) && shotY <= (alienY+ALIEN_HEIGHT) ) {
+                        ImageIcon ii = new ImageIcon(getClass().getResource(boom));
                         alien.spriteAlien.setImage(ii.getImage());
                         alien.spriteAlien.setDying(true);
                         deaths++;
@@ -181,6 +205,24 @@ public class ScreenView extends JPanel implements Runnable {
                 }
             }
 
+            if (bossAlien.bossSprite.isVisible() && shot.spriteShot.isVisible()) {
+                int bossX = bossAlien.bossSprite.getX();
+                int bossY = bossAlien.bossSprite.getY();
+                if ( shotX >= (bossX) && shotX <= (bossX + BOSS_WIDTH) &&
+                        shotY >= (bossY) && shotY <= (bossY + BOSS_HEIGHT) ) {
+                    bossCountLife--;
+                    shot.spriteShot.die();
+                    countShot++;
+                    if(bossCountLife == 0) {
+                        ImageIcon ii = new ImageIcon(getClass().getResource(boomBoss));
+                        bossAlien.bossSprite.setImage(ii.getImage());
+                        bossAlien.bossSprite.setDying(true);
+                        countShot++;
+                        deaths++;
+                        countScores++;
+                    }
+                }
+            }
 
             int y = shot.spriteShot.getY();
             y -= 10;
@@ -191,18 +233,14 @@ public class ScreenView extends JPanel implements Runnable {
             else shot.spriteShot.setY(y);
         }
 
-        // aliens
-
         Iterator enterDirection = aliens.iterator();
 
-
-        //Изменение направления движения врагов
         while (enterDirection.hasNext()) {
             Alien selectionDirection = (Alien) enterDirection.next();
             int x = selectionDirection.spriteAlien.getX();
 
-            if (x  >= SCREEN_WIDTH - SCREEN_RIGHT && direction != -1) {
-                direction = -1;
+            if (x  >= SCREEN_WIDTH - SCREEN_RIGHT && direction != -3) {
+                direction = -3;
 
                 Iterator alienSelectionDirection = aliens.iterator();
                 while (alienSelectionDirection.hasNext()) {
@@ -211,8 +249,8 @@ public class ScreenView extends JPanel implements Runnable {
                 }
             }
 
-            if (x <= SCREEN_LEFT && direction != 1) {
-                direction = 1;
+            if (x <= SCREEN_LEFT && direction != 3) {
+                direction = 3;
 
                 Iterator i2 = aliens.iterator();
                 while (i2.hasNext()) {
@@ -222,7 +260,6 @@ public class ScreenView extends JPanel implements Runnable {
             }
         }
 
-    //Само перемещение
         Iterator it = aliens.iterator();
 
         while (it.hasNext()) {
@@ -233,7 +270,7 @@ public class ScreenView extends JPanel implements Runnable {
 
                 if (y > EARTH - ALIEN_HEIGHT) {
                     inGame = false;
-                   // message = "Invasion!";//ВТОРЖЕНИЕ
+                   //void gameOver;
                 }
                 alien.act(direction);
             }
@@ -267,16 +304,24 @@ public class ScreenView extends JPanel implements Runnable {
 
     }
 
-
+    public void keyPressShot(){
+        int x = player.spritePlayer.getX();
+        int y = player.spritePlayer.getY();
+        if (!shot.spriteShot.isVisible())
+            shot = new Shot(new Sprite(),x, y);
+    }
+    public void  keyLeft(){player.moveLeft();}
+    public void keyRight(){player.moveRight();}
+    public void stopKey(){player.stopPlayer();}
+/*
     public class KeyManager extends KeyAdapter {
 
 
         public void keyReleased(KeyEvent e) {
-            int key = e.getKeyCode();
 
+            int key = e.getKeyCode();
             if (key == KeyEvent.VK_LEFT) {player.stopPlayer();}
             if (key == KeyEvent.VK_RIGHT) {player.stopPlayer();}
-           // player.keyReleased(e);
         }
 
 
@@ -306,5 +351,5 @@ public class ScreenView extends JPanel implements Runnable {
         }
     }
 
-
+*/
 }
