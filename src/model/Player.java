@@ -7,7 +7,7 @@ public class Player  {
 
     private String player = "/res/deltoid.png";
 
-    private final int START_Y = 730;
+    private final int START_Y = 530;
     private final int START_X = 360;
     public Sprite spritePlayer;
     private int width;

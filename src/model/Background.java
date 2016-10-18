@@ -9,8 +9,7 @@ public class Background {
     private final int START_Y = 0;
     private final int START_X = 0;
     public Sprite spriteBack;
-    private int width;
-
+    public int width;
 
     public Background(Sprite spriteBack) {
         this.spriteBack = spriteBack;

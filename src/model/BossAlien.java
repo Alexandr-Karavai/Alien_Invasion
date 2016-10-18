@@ -14,6 +14,7 @@ public class BossAlien {
         this.bossSprite = bossSprite;
         bossSprite.setX(BOSS_X);
         bossSprite.setY(BOSS_Y);
+
         ImageIcon ii = new ImageIcon(this.getClass().getResource(shot));
         bossSprite.setImage(ii.getImage());
     }
@@ -21,5 +22,4 @@ public class BossAlien {
     public void act(int direction) {
         this.bossSprite.x += direction;
     }
-
 }

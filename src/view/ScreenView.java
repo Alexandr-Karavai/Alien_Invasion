@@ -16,11 +16,11 @@ public class ScreenView extends JPanel implements Runnable {
 
     private Player player;
     private Shot shot;
+    private BombBoss bombBoss;
     private ArrayList aliens;
     private BossAlien bossAlien;
-
+    private Sprite status;
     private Background background;
-
 
     public Dimension dimension;
 
@@ -32,7 +32,6 @@ public class ScreenView extends JPanel implements Runnable {
     private int countScores = 0;
     private String scoresString;
     private String shotString;
-
     private int direction = -3;
     private int deaths = 0;
     public int bossCountLife = 3;
@@ -40,17 +39,15 @@ public class ScreenView extends JPanel implements Runnable {
     private final String alienpix = "/res/alien2.png";
     private final String boom = "/res/blood.png";
     private final String boomBoss = "/res/bloodBoss.png";
+    private final String gameOver= "/res/gameOver2.png";
 
 
     public ScreenView()
     {
         addKeyListener(new KeyController(this));
-      //  addKeyListener(new KeyManager());
         setFocusable(true);
         dimension = new Dimension(SCREEN_WIDTH, SCREEN_HEIGHT);
-        //setBackground(Color.black);
         gameCreateObject();
-
     }
 
 
@@ -58,12 +55,17 @@ public class ScreenView extends JPanel implements Runnable {
 
         background = new Background(new Sprite());
         aliens = new ArrayList();
+
         bossAlien = new BossAlien(new Sprite());
         bossAlien.bossSprite.setVisible(false);
+
+        status = new Sprite();
+        status.setVisible(false);
+
         ImageIcon ii = new ImageIcon(this.getClass().getResource(alienpix));
 
-        for (int i=0; i < 1; i++) {
-            for (int j=0; j < 1; j++) {
+        for (int i=0; i < 4; i++) {
+            for (int j=0; j < 5; j++) {
                 Alien alien = new Alien(ALIEN_X + 45*j, ALIEN_Y + 40*i, new Sprite());
                 alien.spriteAlien.setImage(ii.getImage());
                 aliens.add(alien);
@@ -71,6 +73,7 @@ public class ScreenView extends JPanel implements Runnable {
         }
 
         shot = new Shot(new Sprite());
+        bombBoss = new BombBoss(new Sprite());
         player = new Player(new Sprite());
 
 
@@ -85,6 +88,17 @@ public class ScreenView extends JPanel implements Runnable {
         if (background.spriteBack.isVisible()) {
             g.drawImage(background.spriteBack.getImage(), background.spriteBack.getX(),
                     background.spriteBack.getY(), this);
+        }
+    }
+
+    public void drawStatus(Graphics g){
+
+        if(status.isVisible()){
+             ImageIcon ii = new ImageIcon(getClass().getResource(gameOver));
+                status.setX(160);
+                status.setY(200);
+                status.setImage(ii.getImage());
+                g.drawImage(status.getImage(),status.getX(),status.getY(),this);
         }
     }
 
@@ -110,6 +124,11 @@ public class ScreenView extends JPanel implements Runnable {
             bossAlien.bossSprite.die();
         }
 
+    }
+
+    public void drawBombing(Graphics g) {
+        if (bombBoss.spriteBomb.isVisible())
+            g.drawImage(bombBoss.spriteBomb.getImage(), bombBoss.spriteBomb.getX(), bombBoss.spriteBomb.getY(), this);
     }
 
     public void drawAliens(Graphics g)
@@ -138,44 +157,43 @@ public class ScreenView extends JPanel implements Runnable {
     public void paint(Graphics g)
     {
         super.paint(g);
-
         shotString = "Shots: " + countShot;
         scoresString = "Scores: " + 100*countScores;
-
-       // g.setColor(Color.black);
-       // g.fillRect(0, 0, dimension.width, dimension.height);
         g.setColor(Color.green);
         drawBackground(g);
+        drawStatus(g);
         if (inGame) {
             Font font = new Font("Helvetica", Font.BOLD, 28);
             g.setFont(font);
-            g.drawString(shotString,40,840);
-            g.drawString(scoresString,650,840);
+            g.drawString(shotString,40,640);
+            g.drawString(scoresString,520,640);
             g.drawLine(0, EARTH, SCREEN_WIDTH, EARTH);
             drawAliens(g);
             drawBoss(g);
             drawPlayer(g);
             drawShot(g);
+            drawBombing(g);
         }
         Toolkit.getDefaultToolkit().sync();
         g.dispose();
     }
 
     public void animationCycle() {
+        player.act();
 
         if (deaths == NUMBER_OF_ALIENS_TO_DESTROY) {
+
             bossAlien.bossSprite.setVisible(true);
             if (bossAlien.bossSprite.isVisible()) {
+
+                int xB = bossAlien.bossSprite.getX();
+                int yB = bossAlien.bossSprite.getY();
+                if (!bombBoss.spriteBomb.isVisible())
+                    bombBoss = new BombBoss(new Sprite(),xB, yB);
+
                 int x = bossAlien.bossSprite.getX();
                 if (x  >= SCREEN_WIDTH - SCREEN_RIGHT_BOSS && direction != -3) {direction = -3;}
                 if (x <= SCREEN_LEFT && direction != 3) {direction = 3;}
-/*
-              //  int y = bossAlien.bossSprite.getY();
-
-                if (y > EARTH - ALIEN_HEIGHT) {
-                    inGame = false;
-                    //void gameOver;
-                }*/
                 bossAlien.act(direction);
             }
         }
@@ -233,6 +251,39 @@ public class ScreenView extends JPanel implements Runnable {
             else shot.spriteShot.setY(y);
         }
 
+        if (bombBoss.spriteBomb.isVisible()){
+
+            int bombX = bombBoss.spriteBomb.getX();
+            int bombY = bombBoss.spriteBomb.getY();
+            int playerX = player.spritePlayer.getX();
+            int playerY = player.spritePlayer.getY();
+
+            if (player.spritePlayer.isVisible() && !bombBoss.spriteBomb.isDying()) {
+                if ( bombX >= (playerX) &&
+                        bombX <= (playerX+PLAYER_WIDTH) &&
+                        bombY >= (playerY) &&
+                        bombY <= (playerY+PLAYER_HEIGHT) ) {
+                    ImageIcon ii =
+                            new ImageIcon(this.getClass().getResource(boom));
+                    player.spritePlayer.setImage(ii.getImage());
+                    player.spritePlayer.setDying(true);
+                    status.setVisible(true);
+                    bombBoss.spriteBomb.die();
+                    player.spritePlayer.setVisible(false);
+
+                }
+            }
+
+
+            int y = bombBoss.spriteBomb.getY();
+            y += 10;
+            if (bombBoss.spriteBomb.getY() >= EARTH - BOMB_HEIGHT) {
+                bombBoss.spriteBomb.die();
+            }
+            else bombBoss.spriteBomb.setY(y);
+
+        }
+
         Iterator enterDirection = aliens.iterator();
 
         while (enterDirection.hasNext()) {
@@ -269,13 +320,14 @@ public class ScreenView extends JPanel implements Runnable {
                 int y = alien.spriteAlien.getY();
 
                 if (y > EARTH - ALIEN_HEIGHT) {
+                    status.setVisible(true);
                     inGame = false;
-                   //void gameOver;
+
                 }
                 alien.act(direction);
             }
         }
-        player.act();
+
     }
 
 
@@ -313,43 +365,4 @@ public class ScreenView extends JPanel implements Runnable {
     public void  keyLeft(){player.moveLeft();}
     public void keyRight(){player.moveRight();}
     public void stopKey(){player.stopPlayer();}
-/*
-    public class KeyManager extends KeyAdapter {
-
-
-        public void keyReleased(KeyEvent e) {
-
-            int key = e.getKeyCode();
-            if (key == KeyEvent.VK_LEFT) {player.stopPlayer();}
-            if (key == KeyEvent.VK_RIGHT) {player.stopPlayer();}
-        }
-
-
-        public void keyPressed(KeyEvent e) {
-
-            int key = e.getKeyCode();
-
-            if (key == KeyEvent.VK_LEFT) {player.moveLeft();}
-            if (key == KeyEvent.VK_RIGHT) {player.moveRight();}
-
-            int x = player.spritePlayer.getX();
-            int y = player.spritePlayer.getY();
-
-            if (inGame)
-            {
-
-                if (key == KeyEvent.VK_UP)
-                {
-                    if (!shot.spriteShot.isVisible())
-                    shot = new Shot(new Sprite(),x, y);
-                }
-
-                if (key == KeyEvent.VK_ESCAPE) { System.exit(0); }
-            }
-
-
-        }
-    }
-
-*/
 }
