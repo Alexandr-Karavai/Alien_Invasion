@@ -223,7 +223,7 @@ public class ScreenView extends JPanel implements Runnable {
                 }
             }
 
-            if (bossAlien.bossSprite.isVisible() && shot.spriteShot.isVisible()) {
+                if (bossAlien.bossSprite.isVisible() && shot.spriteShot.isVisible()) {
                 int bossX = bossAlien.bossSprite.getX();
                 int bossY = bossAlien.bossSprite.getY();
                 if ( shotX >= (bossX) && shotX <= (bossX + BOSS_WIDTH) &&
@@ -251,7 +251,38 @@ public class ScreenView extends JPanel implements Runnable {
             else shot.spriteShot.setY(y);
         }
 
-        if (bombBoss.spriteBomb.isVisible()){
+/** Добавил столкновение с врагом :)))
+* */
+        if (player.spritePlayer.isVisible()) {
+
+            Iterator playerdeath = aliens.iterator();
+            int playerX = player.spritePlayer.getX();
+            int playerY = player.spritePlayer.getY();
+
+            while (playerdeath.hasNext()) {
+                Alien alien = (Alien) playerdeath.next();
+                int alienX = alien.spriteAlien.getX();
+                int alienY = alien.spriteAlien.getY();
+
+                if (alien.spriteAlien.isVisible() && player.spritePlayer.isVisible()) {
+                    if (playerX >= (alienX) && playerX <= (alienX + ALIEN_WIDTH) &&
+                            playerY >= (alienY) && playerY <= (alienY + ALIEN_HEIGHT)) {
+                        ImageIcon ii = new ImageIcon(getClass().getResource(boom));
+                        alien.spriteAlien.setImage(ii.getImage());
+                        alien.spriteAlien.setDying(true);
+                        player.spritePlayer.setDying(true);
+                        status.setVisible(true);
+                        player.spritePlayer.setVisible(false);
+                    }
+                }
+            }
+        }
+/** s//////////////////////////////////////////////////////////////////////////////////////////////
+ *
+ *
+ */
+
+            if (bombBoss.spriteBomb.isVisible()){
 
             int bombX = bombBoss.spriteBomb.getX();
             int bombY = bombBoss.spriteBomb.getY();
