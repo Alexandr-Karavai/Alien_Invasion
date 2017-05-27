@@ -11,7 +11,6 @@ import java.util.Iterator;
 
 import static controller.Settings.*;
 
-
 public class ScreenView extends JPanel implements Runnable {
 
     private Player player;
@@ -19,8 +18,15 @@ public class ScreenView extends JPanel implements Runnable {
     private BombBoss bombBoss;
     private ArrayList aliens;
     private BossAlien bossAlien;
-    private Sprite status;
     private Background background;
+    private GameWin gameWin;
+    private GameOver gameOver;
+    private MedKit medKit;
+
+    private Audio audioShot;
+    private Audio audioDieAlien;
+    private Audio audioShotBoss;
+    private Audio audioDiePlayer;
 
     public Dimension dimension;
 
@@ -34,12 +40,12 @@ public class ScreenView extends JPanel implements Runnable {
     private String shotString;
     private int direction = -3;
     private int deaths = 0;
+    private int playerCountLife = 1;
     public int bossCountLife = 3;
 
     private final String alienpix = "/res/alien2.png";
     private final String boom = "/res/blood.png";
     private final String boomBoss = "/res/bloodBoss.png";
-    private final String gameOver= "/res/gameOver2.png";
 
 
     public ScreenView()
@@ -59,8 +65,14 @@ public class ScreenView extends JPanel implements Runnable {
         bossAlien = new BossAlien(new Sprite());
         bossAlien.bossSprite.setVisible(false);
 
-        status = new Sprite();
-        status.setVisible(false);
+        gameWin = new GameWin(new Sprite());
+        gameWin.spriteWin.setVisible(false);
+
+        medKit  = new MedKit(new Sprite());
+        medKit.spriteMedKit.setVisible(false);
+
+        gameOver = new GameOver(new Sprite());
+        gameOver.spriteLose.setVisible(false);
 
         ImageIcon ii = new ImageIcon(this.getClass().getResource(alienpix));
 
@@ -76,7 +88,6 @@ public class ScreenView extends JPanel implements Runnable {
         bombBoss = new BombBoss(new Sprite());
         player = new Player(new Sprite());
 
-
         if (animationThread == null || !inGame) {
             animationThread = new Thread(this);
             animationThread.start();
@@ -91,14 +102,27 @@ public class ScreenView extends JPanel implements Runnable {
         }
     }
 
-    public void drawStatus(Graphics g){
+    public void drawWin(Graphics g) {
 
-        if(status.isVisible()){
-             ImageIcon ii = new ImageIcon(getClass().getResource(gameOver));
-                status.setX(160);
-                status.setY(200);
-                status.setImage(ii.getImage());
-                g.drawImage(status.getImage(),status.getX(),status.getY(),this);
+        if (gameWin.spriteWin.isVisible()) {
+            g.drawImage(gameWin.spriteWin.getImage(), gameWin.spriteWin.getX(),
+                    gameWin.spriteWin.getY(), this);
+        }
+    }
+
+    public void drawLose(Graphics g) {
+
+        if (gameOver.spriteLose.isVisible()) {
+            g.drawImage(gameOver.spriteLose.getImage(), gameOver.spriteLose.getX(),
+                    gameOver.spriteLose.getY(), this);
+        }
+    }
+
+    public void drawMedKit(Graphics g) {
+
+        if (medKit.spriteMedKit.isVisible()) {
+            g.drawImage(medKit.spriteMedKit.getImage(), medKit.spriteMedKit.getX(),
+                    medKit.spriteMedKit.getY(), this);
         }
     }
 
@@ -161,9 +185,8 @@ public class ScreenView extends JPanel implements Runnable {
         scoresString = "Scores: " + 100*countScores;
         g.setColor(Color.green);
         drawBackground(g);
-        drawStatus(g);
         if (inGame) {
-            Font font = new Font("Helvetica", Font.BOLD, 28);
+            Font font = new Font("Century Gothic", Font.PLAIN, 28);
             g.setFont(font);
             g.drawString(shotString,40,640);
             g.drawString(scoresString,520,640);
@@ -173,6 +196,9 @@ public class ScreenView extends JPanel implements Runnable {
             drawPlayer(g);
             drawShot(g);
             drawBombing(g);
+            drawMedKit(g);
+            drawWin(g);
+            drawLose(g);
         }
         Toolkit.getDefaultToolkit().sync();
         g.dispose();
@@ -218,6 +244,9 @@ public class ScreenView extends JPanel implements Runnable {
                         deaths++;
                         countShot++;
                         countScores++;
+                        if(deaths == 10){
+                            medKit.spriteMedKit.setVisible(true);
+                        }
                         shot.spriteShot.die();
                     }
                 }
@@ -238,6 +267,8 @@ public class ScreenView extends JPanel implements Runnable {
                         countShot++;
                         deaths++;
                         countScores++;
+                        gameWin.spriteWin.setVisible(true);
+                        player.spritePlayer.setVisible(false);
                     }
                 }
             }
@@ -271,7 +302,7 @@ public class ScreenView extends JPanel implements Runnable {
                         alien.spriteAlien.setImage(ii.getImage());
                         alien.spriteAlien.setDying(true);
                         player.spritePlayer.setDying(true);
-                        status.setVisible(true);
+                        gameOver.spriteLose.setVisible(true);
                         player.spritePlayer.setVisible(false);
                     }
                 }
@@ -282,6 +313,30 @@ public class ScreenView extends JPanel implements Runnable {
  *
  */
 
+        if (medKit.spriteMedKit.isVisible() && player.spritePlayer.isVisible()) {
+
+            int playerX = player.spritePlayer.getX();
+            int playerY = player.spritePlayer.getY();
+            int medKitX = medKit.spriteMedKit.getX();
+            int medKitY = medKit.spriteMedKit.getY();
+
+                    if (medKitX >= playerX && medKitX <= (playerX + PLAYER_WIDTH) &&
+                            medKitY >= (playerY) && medKitY <= (playerY + PLAYER_HEIGHT)) {
+
+                        playerCountLife++;
+                        medKit.spriteMedKit.setDying(true);
+                        medKit.spriteMedKit.setVisible(false);
+                    }
+
+            }
+
+
+/**fsdgdfgdfhdhsgh
+ *
+ *
+ *
+ *
+ */
             if (bombBoss.spriteBomb.isVisible()){
 
             int bombX = bombBoss.spriteBomb.getX();
@@ -290,22 +345,24 @@ public class ScreenView extends JPanel implements Runnable {
             int playerY = player.spritePlayer.getY();
 
             if (player.spritePlayer.isVisible() && !bombBoss.spriteBomb.isDying()) {
-                if ( bombX >= (playerX) &&
+                if ( bombX+PLAYER_WIDTH >= (playerX) &&
                         bombX <= (playerX+PLAYER_WIDTH) &&
-                        bombY >= (playerY) &&
+                        bombY+PLAYER_HEIGHT >= (playerY) &&
                         bombY <= (playerY+PLAYER_HEIGHT) ) {
-                    ImageIcon ii =
-                            new ImageIcon(this.getClass().getResource(boom));
-                    player.spritePlayer.setImage(ii.getImage());
-                    player.spritePlayer.setDying(true);
-                    status.setVisible(true);
-                    bombBoss.spriteBomb.die();
-                    player.spritePlayer.setVisible(false);
+                    playerCountLife--;
+                    if(playerCountLife == 0){
+                        ImageIcon ii =
+                                new ImageIcon(this.getClass().getResource(boom));
+                        player.spritePlayer.setImage(ii.getImage());
+                        player.spritePlayer.setDying(true);
+                        gameOver.spriteLose.setVisible(true);
+                        bombBoss.spriteBomb.die();
+                        player.spritePlayer.setVisible(false);
 
+                    }
+                    bombBoss.spriteBomb.die();
                 }
             }
-
-
             int y = bombBoss.spriteBomb.getY();
             y += 10;
             if (bombBoss.spriteBomb.getY() >= EARTH - BOMB_HEIGHT) {
@@ -351,9 +408,8 @@ public class ScreenView extends JPanel implements Runnable {
                 int y = alien.spriteAlien.getY();
 
                 if (y > EARTH - ALIEN_HEIGHT) {
-                    status.setVisible(true);
+                    gameOver.spriteLose.setVisible(true);
                     inGame = false;
-
                 }
                 alien.act(direction);
             }
@@ -390,7 +446,10 @@ public class ScreenView extends JPanel implements Runnable {
     public void keyPressShot(){
         int x = player.spritePlayer.getX();
         int y = player.spritePlayer.getY();
+
         if (!shot.spriteShot.isVisible())
+            audioShot  = new Audio("/res/jump1.wav");
+            audioShot.play();
             shot = new Shot(new Sprite(),x, y);
     }
     public void  keyLeft(){player.moveLeft();}
