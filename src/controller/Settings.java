@@ -21,4 +21,5 @@ public final class Settings {
     public static final int PLAYER_WIDTH = 48;
     public static final int PLAYER_HEIGHT = 48;
     public static final int BOMB_HEIGHT = 20;
+
 }

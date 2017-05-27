@@ -11,11 +11,11 @@ public class KeyController extends KeyAdapter {
 
     public void keyReleased(KeyEvent e) {
             int key = e.getKeyCode();
-            if (key == KeyEvent.VK_LEFT) {screenView.stopKey();}
-            if (key == KeyEvent.VK_RIGHT) {screenView.stopKey();}
+            if (key == KeyEvent.VK_LEFT | key == KeyEvent.VK_RIGHT) {screenView.stopKey();}
+           // if (key == KeyEvent.VK_RIGHT) {screenView.stopKey();}
         }
 
-        public void keyPressed(KeyEvent e) {
+    public void keyPressed(KeyEvent e) {
             int key = e.getKeyCode();
             if (key == KeyEvent.VK_LEFT) {screenView.keyLeft();}
             if (key == KeyEvent.VK_RIGHT) {screenView.keyRight();}
